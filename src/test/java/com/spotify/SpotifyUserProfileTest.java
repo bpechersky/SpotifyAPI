@@ -1,22 +1,27 @@
 package com.spotify;
 //comment
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.testng.annotations.Test;
+import com.spotify.util.SpotifyTokenUtil;
+
+
+
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 public class SpotifyUserProfileTest {
 
-    private static final String ACCESS_TOKEN = "BQDqkqK11PsxPx4AhsUMh6G-RsnVyKNFZhzhY9Mirv1nUHyR92JnFsInH7MIrdXOJuUod8XQh5zXp2uGvoKQN5RS-dps5mOv-_02p1T3Qqrc5J4cEMON6318BeM3cprg0KoCqRX-50xR4jP_hWPV6YU-sbMy_Xwwx0yU6vpG9OFLCcZENXs8ngvLU_gJ6t1HVQyBolHSW3rs_WzeyrUY27Ww2qNb5hUxGfnHoUEuedbvoU8eRXJcvIZ288qrpl4Ii9XsLWGjtGJVE3B5RuUY0uD8QXllLPvFnimtOfYnCPpMmdBCUyftAk4rmbd4l4IGBoHfSfVUPAYYWOA5sosqE7bHXizK-P25QQieDV7LvsfkqaWNDXobTqnoAbdU";
-
+    private static final String ACCESS_TOKEN = "BQCjEsOJS9UiTdmU9Fox9GFOUShJoROZ3KbMpB54nB6N0CPKjbZzWMrteDkkh4zOBhopezeUmwP6d88KMR2nAMb_uPX6s4WUui1eMyl-Eoc43bwGK3EsAFMdLXbqmxXgTYCSqFlOj3L0G068HeBDJdZcAlhoyddmET1OJivwdlrdepBZaqu-MgvtWnbJiQr6dsi8YhXse4CDeCDxmM6dfGrZTsq1WClAdUgyo0_srCsQU9Sn8QxZWwaMhJ9r8yWHSim3jDGP69PGYcZFjH_AWMpil7cQU2D2yHAEDBnFgg1Z6lHqsP7JCpsAhmoZoW73yV-dI_A8d_IuMcIhmjjsjgDU5itoSTtMvCwJQ77QWduw8A7dvl_uQ9Fbja4Z";
+    String token = SpotifyTokenUtil.fetchAccessToken();
     @Test
     public void getCurrentUserProfile() {
         RestAssured.baseURI = "https://api.spotify.com";
 
         Response response = given()
-                .header("Authorization", "Bearer " + ACCESS_TOKEN)
+                .header("Authorization", "Bearer " + token)
                 .header("Content-Type", "application/json")
         .when()
                 .get("/v1/me")
@@ -27,5 +32,42 @@ public class SpotifyUserProfileTest {
                 .extract().response();
 
         System.out.println("User Profile Response: " + response.asPrettyString());
+    }
+
+    @Test
+    public void getPublicUserProfile() {
+
+        //String token = SpotifyTokenUtil.fetchAccessToken();
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/v1/users/31llaaagrkuctjrzldhi4754vujy")
+                .then()
+                .statusCode(200)
+                .log().all();
+    }
+
+    @Test
+    public void getTrackById() {
+
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        Response response = given()
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .when()
+                .get("/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh")
+                .then()
+                .statusCode(200)
+                .body("name", notNullValue())
+                .body("id", equalTo("4iV5W9uYEdYUVa79Axb7Rh"))
+                .extract().response();
+
+        System.out.println("Track Info: " + response.asPrettyString());
     }
 }
