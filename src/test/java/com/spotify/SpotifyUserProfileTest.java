@@ -76,4 +76,30 @@ public class SpotifyUserProfileTest {
 
         System.out.println("Track Info: " + response.asPrettyString());
     }
+
+
+
+        @Test
+        public void saveTrackToLibrary() {
+            RestAssured.baseURI = "https://api.spotify.com";
+
+            String requestBody = """
+        {
+          "ids": [
+            "4iV5W9uYEdYUVa79Axb7Rh"
+          ]
+        }
+        """;
+
+            given()
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(ContentType.JSON)
+                    .body(requestBody)
+                    .when()
+                    .put("/v1/me/tracks")
+                    .then()
+                    .statusCode(200); // 200 OK means track successfully saved
+        }
+
+
 }
