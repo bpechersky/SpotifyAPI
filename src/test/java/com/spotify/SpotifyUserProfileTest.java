@@ -27,8 +27,14 @@ public class SpotifyUserProfileTest {
                 .get("/v1/me")
         .then()
                 .statusCode(200)
-                .body("id", notNullValue())
-                .body("type", equalTo("user"))
+                .body("country", equalTo("US"))
+                .body("display_name", equalTo("Boris Pechersky"))
+                .body("email", equalTo("bpechersky@gmx.com"))
+                .body("explicit_content.filter_enabled", equalTo(false))
+                .body("explicit_content.filter_locked", equalTo(false))
+                .body("external_urls.spotify", equalTo("https://open.spotify.com/user/31llaaagrkuctjrzldhi4754vujy"))
+                .body("followers.total", equalTo(0))
+                .body("href", equalTo("https://api.spotify.com/v1/users/31llaaagrkuctjrzldhi4754vujy"))
                 .extract().response();
 
         System.out.println("User Profile Response: " + response.asPrettyString());
