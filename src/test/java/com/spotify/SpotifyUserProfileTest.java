@@ -246,4 +246,18 @@ public class SpotifyUserProfileTest {
                 .statusCode(200); // No body is returned, only a 200 OK on success
     }
 
+    @Test
+    public void deleteTrackFromUserLibrary() {
+        String[] trackIds = { "4iV5W9uYEdYUVa79Axb7Rh" };
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .body("{\"ids\": [\"" + String.join("\",\"", trackIds) + "\"]}")
+                .when()
+                .delete("/v1/me/tracks")
+                .then()
+                .statusCode(200); // 200 OK expected if deletion was successful
+    }
+
 }

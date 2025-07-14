@@ -36,4 +36,5 @@ public class SpotifyTokenUtil {
 
         return response.jsonPath().getString("access_token");
     }
+
 }
