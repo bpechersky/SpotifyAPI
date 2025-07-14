@@ -189,4 +189,24 @@ public class SpotifyUserProfileTest {
                 .body("public", anyOf(is(true), is(false))); // nullable, may also be null
     }
 
+    @Test
+    public void deleteTrackFromPlaylistAndValidateResponse() {
+     //   String accessToken = "BQD9fH3DdRYyLSpToBGxCq..."; // Replace with fresh token
+        String playlistId = "3cNg3v1sPgMvzDFgt0AW2H";
+        String trackUri = "spotify:track:4iV5W9uYEdYUVa79Axb7Rh";
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .basePath("/v1/playlists/" + playlistId + "/tracks")
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("{ \"tracks\": [ { \"uri\": \"" + trackUri + "\" } ] }")
+                .when()
+                .delete()
+                .then()
+                .statusCode(200)
+                .body("snapshot_id", equalTo("AAAADJuZgKzcVxjyPNUB7hIQoZIwX3er"));
+    }
+
 }
