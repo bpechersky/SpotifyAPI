@@ -229,4 +229,21 @@ public class SpotifyUserProfileTest {
                 .body("items[0].added_at", notNullValue());
     }
 
+    @Test
+    public void saveAlbumToLibrary() {
+
+        String albumId = "4aawyAB9vmqN3uQ7FjRGTy"; // example album ID
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("{\"ids\": [\"" + albumId + "\"]}")
+                .when()
+                .put("/v1/me/albums")
+                .then()
+                .statusCode(200); // No body is returned, only a 200 OK on success
+    }
+
 }
