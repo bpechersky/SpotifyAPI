@@ -112,5 +112,28 @@ public class SpotifyUserProfileTest {
                     .statusCode(200); // 200 OK means track successfully saved
         }
 
+    @Test
+    public void getAlbumById() {
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        Response response = given()
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .when()
+                .get("/v1/albums/7MNrrItJpom6uMJWdT0XD8")
+                .then()
+                .statusCode(200)
+                .body("album_type", equalTo("album"))
+                .body("id", equalTo("7MNrrItJpom6uMJWdT0XD8"))
+                .body("type", equalTo("album"))
+                .body("uri", containsString("spotify:album:7MNrrItJpom6uMJWdT0XD8"))
+                .body("artists[0].name", not(emptyOrNullString()))
+                .body("name", not(emptyOrNullString()))
+                .body("release_date", matchesRegex("\\d{4}-\\d{2}-\\d{2}"))
+                .body("total_tracks", greaterThan(0))
+                .extract().response();
+
+        System.out.println("Album Info: " + response.asPrettyString());
+    }
 
 }
