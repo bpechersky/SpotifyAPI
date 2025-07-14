@@ -169,4 +169,24 @@ public class SpotifyUserProfileTest {
         System.out.println("New Playlist Response: " + response.asPrettyString());
     }
 
+    @Test
+    public void getPlaylistAndValidateFields() {
+
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .basePath("/v1/playlists/3cNg3v1sPgMvzDFgt0AW2H")
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .body("name", notNullValue())
+                .body("owner.display_name", notNullValue())
+                .body("tracks.total", greaterThanOrEqualTo(0))
+                .body("public", anyOf(is(true), is(false))); // nullable, may also be null
+    }
+
 }
