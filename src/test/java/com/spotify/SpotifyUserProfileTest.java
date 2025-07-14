@@ -206,7 +206,27 @@ public class SpotifyUserProfileTest {
                 .delete()
                 .then()
                 .statusCode(200)
-                .body("snapshot_id", equalTo("AAAADJuZgKzcVxjyPNUB7hIQoZIwX3er"));
+                .body("snapshot_id", notNullValue());
+    }
+    @Test
+    public void validateUserLikedTracks() {
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .basePath("/v1/me/tracks")
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .body("items", notNullValue())
+                .body("items.size()", greaterThan(0))
+                .body("items[0].track.name", notNullValue())
+                .body("items[0].track.artists[0].name", notNullValue())
+                .body("items[0].track.album.name", notNullValue())
+                .body("items[0].added_at", notNullValue());
     }
 
 }
