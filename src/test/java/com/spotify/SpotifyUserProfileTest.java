@@ -47,14 +47,25 @@ public class SpotifyUserProfileTest {
 
         RestAssured.baseURI = "https://api.spotify.com";
 
-        given()
+        Response response = given()
                 .header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON)
                 .when()
                 .get("/v1/users/31llaaagrkuctjrzldhi4754vujy")
                 .then()
                 .statusCode(200)
-                .log().all();
+                .body("display_name", equalTo("Boris Pechersky"))
+                .body("external_urls.spotify", equalTo("https://open.spotify.com/user/31llaaagrkuctjrzldhi4754vujy"))
+                .body("followers.href", nullValue())
+                .body("followers.total", equalTo(0))
+                .body("href", equalTo("https://api.spotify.com/v1/users/31llaaagrkuctjrzldhi4754vujy"))
+                .body("id", equalTo("31llaaagrkuctjrzldhi4754vujy"))
+                .body("images.size()", equalTo(0))
+                .body("type", equalTo("user"))
+                .body("uri", equalTo("spotify:user:31llaaagrkuctjrzldhi4754vujy"))
+                .extract().response();
+
+        System.out.println("Public User Profile: " + response.asPrettyString());
     }
 
     @Test
