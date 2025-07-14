@@ -135,5 +135,38 @@ public class SpotifyUserProfileTest {
 
         System.out.println("Album Info: " + response.asPrettyString());
     }
+    @Test
+    public void createPlaylistForUser() {
+        RestAssured.baseURI = "https://api.spotify.com";
+
+
+
+        String requestBody = """
+        {
+          "name": "My Cool Playlist",
+          "description": "Created via API",
+          "public": false
+        }
+        """;
+
+        Response response = given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/v1/users/31llaaagrkuctjrzldhi4754vujy/playlists")
+                .then()
+                .statusCode(201)
+                .body("name", equalTo("My Cool Playlist"))
+                .body("description", equalTo("Created via API"))
+                .body("public", equalTo(false))
+                .body("id", notNullValue())
+                .body("owner.id", equalTo("31llaaagrkuctjrzldhi4754vujy"))
+                .body("type", equalTo("playlist"))
+                .body("uri", containsString("spotify:playlist:"))
+                .extract().response();
+
+        System.out.println("New Playlist Response: " + response.asPrettyString());
+    }
 
 }
