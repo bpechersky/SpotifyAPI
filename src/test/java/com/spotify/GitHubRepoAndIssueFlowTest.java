@@ -8,6 +8,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public class GitHubRepoAndIssueFlowTest {
 
@@ -114,7 +115,7 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("🗑️ Closed issue #" + issueNumber);
     }
 
-    @Test(priority = 7, dependsOnMethods = "closeIssue")
+    @Test(priority = 7, dependsOnMethods = "getAllIssuesForRepo")
     public void deleteRepo() {
         RestAssured.given()
                 .baseUri(BASE_URI)
@@ -138,4 +139,19 @@ public class GitHubRepoAndIssueFlowTest {
                 .then()
                 .statusCode(204);
     }
+
+    @Test(priority = 6, dependsOnMethods = "closeIssue")
+    public void getAllIssuesForRepo() {
+        given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .when()
+                .get("/repos/" + OWNER + "/" + repoName + "/issues")
+                .then()
+                .statusCode(200)
+                .log().body()
+                .assertThat().body("size()", greaterThanOrEqualTo(1));
+    }
+
 }
