@@ -10,7 +10,7 @@ import static io.restassured.RestAssured.given;
 public class GetGitHubUserTest {
 
     private final String BASE_URI = "https://api.github.com";
-    private final String TOKEN = System.getenv("GITHUB_TOKEN"); // ✅ Best practice
+    private final String TOKEN = System.getenv("GITHUB_PAT"); // ✅ Best practice
 
     @Test
     public void getAuthenticatedUser_shouldReturnValidProfile() {
