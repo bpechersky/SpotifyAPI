@@ -7,7 +7,10 @@ import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Base64;
+
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public class GitHubRepoAndIssueFlowTest {
@@ -186,7 +189,119 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("❌ Deleted comment ID: " + commentId);
     }
 
+
+    public String getShaOfMainBranch() {
+        Response response = given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .when()
+                .get("/repos/" + OWNER + "/" + repoName + "/git/ref/heads/main")
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        String sha = response.jsonPath().getString("object.sha");
+        System.out.println("🔑 Main branch SHA: " + sha);
+        return sha;
+    }
     @Test(priority = 10, dependsOnMethods = "deleteComment")
+    public void createBranchFromMain() {
+        String mainSha = getShaOfMainBranch(); // make sure this is in the same class or accessible
+        String newBranchName = "feature-branch";
+
+        String payload = """
+        {
+          "ref": "refs/heads/%s",
+          "sha": "%s"
+        }
+        """.formatted(newBranchName, mainSha);
+
+        given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/repos/" + OWNER + "/" + repoName + "/git/refs")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(201);
+
+        System.out.println("🌿 Created branch: " + newBranchName);
+    }
+    @Test(priority = 11, dependsOnMethods = "createBranchFromMain")
+    public void commitFileToNewBranch() {
+        String branchName = "feature-branch";
+
+        String payload = """
+        {
+          "message": "📄 Add new file from API",
+          "content": "%s",
+          "branch": "%s"
+        }
+        """.formatted(
+                Base64.getEncoder().encodeToString("Hello from GitHub API!".getBytes()),
+                branchName
+        );
+
+        given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .put("/repos/" + OWNER + "/" + repoName + "/contents/api-file.txt")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(201);
+
+        System.out.println("✅ Committed file to branch: " + branchName);
+    }
+    @Test(priority = 12, dependsOnMethods = "commitFileToNewBranch")
+
+    public void createPullRequest() {
+        // Make sure you already created this branch via the API or manually
+        String sourceBranch = "feature-branch";  // branch with new changes
+        String baseBranch = "main";              // target branch for the PR
+
+        String prTitle = "🚀 Add new feature via API";
+        String prBody = "This PR was created automatically from API test.";
+
+        String payload = """
+        {
+          "title": "%s",
+          "head": "%s",
+          "base": "%s",
+          "body": "%s"
+        }
+        """.formatted(prTitle, sourceBranch, baseBranch, prBody);
+
+        Response response = given()
+                .baseUri(BASE_URI)
+                .basePath("/repos/{owner}/{repo}/pulls")
+                .pathParam("owner", OWNER)
+                .pathParam("repo", repoName)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post()
+                .then()
+                .log().ifValidationFails()
+                .statusCode(201)
+                .body("title", equalTo(prTitle))
+                .extract().response();
+
+        int  pullNumber = response.jsonPath().getInt("number");
+        Assert.assertTrue(pullNumber > 0, "❌ Pull request number not returned");
+        System.out.println("✅ Created PR #" + pullNumber);
+    }
+    @Test(priority = 13, dependsOnMethods = "createPullRequest")
+
     public void deleteRepo() {
         given()
                 .baseUri(BASE_URI)
@@ -199,4 +314,6 @@ public class GitHubRepoAndIssueFlowTest {
 
         System.out.println("🧹 Deleted repo: " + repoName);
     }
+
+
 }
