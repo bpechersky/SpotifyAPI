@@ -154,7 +154,8 @@ public class GitHubRepoAndIssueFlowTest {
     }
 
     @Test(priority = 8, dependsOnMethods = "addCommentToIssue")
-    public void getAllIssuesForRepo() {
+    public void getAllIssuesForRepo() throws InterruptedException {
+        Thread.sleep(2000);
         given()
                 .baseUri(BASE_URI)
                 .header("Authorization", "Bearer " + TOKEN)
