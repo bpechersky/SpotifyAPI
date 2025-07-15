@@ -11,6 +11,9 @@ public class GetGitHubUserTest {
 
     private final String BASE_URI = "https://api.github.com";
     private final String TOKEN = System.getenv("GITHUB_PAT"); // ✅ Best practice
+    private final String OWNER = "bpechersky"; // Replace with your GitHub username
+    private final String REPO_NAME = "test-repo-1721070000"; // The repo created in previous test
+
 
     @Test
     public void getAuthenticatedUser_shouldReturnValidProfile() {
