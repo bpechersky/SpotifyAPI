@@ -1,10 +1,13 @@
 package com.spotify;
 
+import com.spotify.util.RepoContext;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static io.restassured.RestAssured.given;
 
 public class GitHubRepoAndIssueFlowTest {
 
@@ -31,9 +34,12 @@ public class GitHubRepoAndIssueFlowTest {
                 .statusCode(201);
 
         System.out.println("✅ Created repo: " + repoName);
+
+        RepoContext.repoName = repoName;
+
     }
 
-    @Test(priority = 2, dependsOnMethods = "createRepo")
+    @Test(priority = 3, dependsOnMethods = "createRepo")
     public void updateRepoDescription() {
         String body = "{ \"description\": \"Updated repo via API\" }";
 
@@ -51,7 +57,7 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("✏️ Updated repo description");
     }
 
-    @Test(priority = 3, dependsOnMethods = "updateRepoDescription")
+    @Test(priority = 4, dependsOnMethods = "updateRepoDescription")
     public void createIssue() {
         String body = "{ \"title\": \"Issue Title\", \"body\": \"Issue body from test\" }";
 
@@ -72,7 +78,7 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("✅ Created issue #" + issueNumber);
     }
 
-    @Test(priority = 4, dependsOnMethods = "createIssue")
+    @Test(priority = 5, dependsOnMethods = "createIssue")
     public void updateIssue() {
         String body = "{ \"title\": \"Updated Issue\", \"body\": \"Updated via API\" }";
 
@@ -90,7 +96,7 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("✏️ Updated issue #" + issueNumber);
     }
 
-    @Test(priority = 5, dependsOnMethods = "updateIssue")
+    @Test(priority = 6, dependsOnMethods = "updateIssue")
     public void closeIssue() {
         String body = "{ \"state\": \"closed\" }";
 
@@ -108,7 +114,7 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("🗑️ Closed issue #" + issueNumber);
     }
 
-    @Test(priority = 6, dependsOnMethods = "closeIssue")
+    @Test(priority = 7, dependsOnMethods = "closeIssue")
     public void deleteRepo() {
         RestAssured.given()
                 .baseUri(BASE_URI)
@@ -120,5 +126,16 @@ public class GitHubRepoAndIssueFlowTest {
                 .statusCode(204);
 
         System.out.println("🧹 Deleted repo: " + repoName);
+    }
+    @Test(priority = 2, dependsOnMethods = "createRepo")
+    public void starRepo() {
+        Assert.assertNotNull(RepoContext.repoName, "❌ repoName was not set!");
+        given()
+                .baseUri("https://api.github.com")
+                .header("Authorization", "Bearer " + TOKEN)
+                .when()
+                .put("/user/starred/" + OWNER + "/" + repoName)
+                .then()
+                .statusCode(204);
     }
 }

@@ -4,6 +4,7 @@
     <test name="User Profile Test">
         <classes>
             <class name="com.spotify.SpotifyUserProfileTest"/>
+            <class name="com.spotify.GitHubRepoAndIssueFlowTest"/>
         </classes>
     </test>
 </suite>
