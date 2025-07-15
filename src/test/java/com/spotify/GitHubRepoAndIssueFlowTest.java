@@ -21,6 +21,8 @@ public class GitHubRepoAndIssueFlowTest {
     private static String repoName;
     private static int issueNumber;
     private static long commentId;
+    private static int pullNumber;
+
 
     @Test(priority = 1)
     public void createRepo() {
@@ -296,11 +298,48 @@ public class GitHubRepoAndIssueFlowTest {
                 .body("title", equalTo(prTitle))
                 .extract().response();
 
-        int  pullNumber = response.jsonPath().getInt("number");
+          pullNumber = response.jsonPath().getInt("number");
         Assert.assertTrue(pullNumber > 0, "❌ Pull request number not returned");
         System.out.println("✅ Created PR #" + pullNumber);
     }
+
     @Test(priority = 13, dependsOnMethods = "createPullRequest")
+    public void mergePullRequest() {
+
+        // 🔍 Step 1: Check current PR state
+        Response prStatus = given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .when()
+                .get("/repos/" + OWNER + "/" + repoName + "/pulls/" + pullNumber)
+                .then()
+                .log().body()
+                .extract().response();
+
+        String state = prStatus.jsonPath().getString("state");
+        System.out.println("📄 PR state: " + state);
+
+        Assert.assertEquals(state, "open", "❌ PR is not open and cannot be merged");
+
+        // 🟠 Step 2: Merge the PR
+        Response mergeResponse = given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/repos/" + OWNER + "/" + repoName + "/pulls/" + pullNumber + "/merge");
+
+        mergeResponse.then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body("merged", equalTo(true));
+
+        System.out.println("🔀 Merged PR #" + pullNumber);
+    }
+
+    @Test(priority = 14, dependsOnMethods = "mergePullRequest")
 
     public void deleteRepo() {
         given()
