@@ -339,7 +339,36 @@ public class GitHubRepoAndIssueFlowTest {
         System.out.println("🔀 Merged PR #" + pullNumber);
     }
 
-    @Test(priority = 14, dependsOnMethods = "mergePullRequest")
+
+
+    @Test(priority = 14, dependsOnMethods = "mergePullRequest")  // Use a different priority if needed
+    public void closePullRequest() {
+        String payload = """
+    {
+      "state": "closed"
+    }
+    """;
+
+        given()
+                .baseUri(BASE_URI)
+                .header("Authorization", "Bearer " + TOKEN)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .patch("/repos/" + OWNER + "/" + repoName + "/pulls/" + pullNumber)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body("state", equalTo("closed"));
+
+        System.out.println("❌ Closed PR #" + pullNumber);
+    }
+
+
+
+
+    @Test(priority = 15, dependsOnMethods = "closePullRequest")
 
     public void deleteRepo() {
         given()
