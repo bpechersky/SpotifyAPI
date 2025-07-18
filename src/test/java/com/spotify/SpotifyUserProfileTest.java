@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import com.spotify.util.SpotifyTokenUtil;
 
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -327,28 +328,49 @@ public class SpotifyUserProfileTest {
     }
 
     @Test
-    public void reorderPlaylistItems() {
+    public void reorderPlaylistItems() throws IOException {
         String playlistId = "3cNg3v1sPgMvzDFgt0AW2H";
+     //   String token = getAccessToken(); // replace with your actual method if needed
 
-        String requestBody = """
-        {
-          "range_start": 0,
-          "insert_before": 1
+        // Step 1: Fetch current playlist tracks
+        Response getResponse = given()
+                .header("Authorization", "Bearer " + token)
+                .when()
+                .get("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks")
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        int totalTracks = getResponse.path("total");
+        System.out.println("Total tracks in playlist: " + totalTracks);
+
+        // Step 2: Ensure there are at least 2 tracks
+        if (totalTracks < 2) {
+            System.out.println("Not enough tracks to reorder.");
+            return;
         }
-        """;
 
-        RestAssured.baseURI = "https://api.spotify.com";
+        // Step 3: Build request body to move first track to position 1
+        String requestBody = """
+    {
+      "range_start": 0,
+      "insert_before": 1
+    }
+    """;
 
+        // Step 4: Perform reorder operation
         given()
                 .header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
-                .put("/v1/playlists/" + playlistId + "/tracks")
+                .put("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks")
                 .then()
+                .log().ifValidationFails()
                 .statusCode(200)
                 .body("snapshot_id", notNullValue());
     }
+
 
     @Test
     public void changePlaybackVolume() {
