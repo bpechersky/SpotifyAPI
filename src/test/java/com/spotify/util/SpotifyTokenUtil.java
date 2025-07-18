@@ -24,17 +24,26 @@ public class SpotifyTokenUtil {
 
         Response response = RestAssured
                 .given()
-                    .contentType(ContentType.URLENC)
-                    .header("Authorization", "Basic " + encodedCredentials)
-                    .formParams(params)
+                .contentType(ContentType.URLENC)
+                .header("Authorization", "Basic " + encodedCredentials)
+                .formParams(params)
                 .when()
-                    .post(TOKEN_URL)
+                .post(TOKEN_URL)
                 .then()
-                    .statusCode(200)
-                    .extract()
-                    .response();
+                .statusCode(200)
+                .extract()
+                .response();
 
-        return response.jsonPath().getString("access_token");
+        // Extract the token to a variable
+        String accessToken = response.jsonPath().getString("access_token");
+
+        // ✅ Print it
+        System.out.println("Access Token: " + accessToken);
+        System.out.println("Scopes: " + response.jsonPath().getString("scope"));
+
+
+        return accessToken;
     }
+
 
 }

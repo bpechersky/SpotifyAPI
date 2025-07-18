@@ -3,11 +3,13 @@ package com.spotify;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.spotify.util.SpotifyTokenUtil;
 
 
-
+import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -39,6 +41,8 @@ public class SpotifyUserProfileTest {
 
         System.out.println("User Profile Response: " + response.asPrettyString());
     }
+
+
 
     @Test
     public void getPublicUserProfile() {
@@ -259,5 +263,174 @@ public class SpotifyUserProfileTest {
                 .then()
                 .statusCode(200); // 200 OK expected if deletion was successful
     }
+
+    @Test
+    public void followPlaylist() {
+        String playlistId = "3cNg3v1sPgMvzDFgt0AW2H"; // replace with your playlist ID
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("{\"public\": false}")
+                .when()
+                .put("/v1/playlists/" + playlistId + "/followers")
+                .then()
+                .statusCode(200); // No content expected
+    }
+    @Test
+    public void updatePlaylistDetailsWithPut() {
+        String playlistId = "3cNg3v1sPgMvzDFgt0AW2H";
+
+        String requestBody = """
+        {
+          "name": "Updated Playlist via PUT",
+          "description": "Updated using correct HTTP method",
+          "public": false
+        }
+        """;
+
+        RestAssured
+                .given()
+                .baseUri("https://api.spotify.com")
+                .basePath("/v1/playlists/" + playlistId)
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .log().all()
+                .when()
+                .put()
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200);
+    }
+
+
+
+    @Test
+    public void addTrackToPlaylist() {
+        String playlistId = "3cNg3v1sPgMvzDFgt0AW2H";
+        String trackUri = "spotify:track:4iV5W9uYEdYUVa79Axb7Rh";
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("{\"uris\": [\"" + trackUri + "\"]}")
+                .when()
+                .post("/v1/playlists/" + playlistId + "/tracks")
+                .then()
+                .statusCode(201)
+                .body("snapshot_id", notNullValue());
+    }
+
+    @Test
+    public void reorderPlaylistItems() {
+        String playlistId = "3cNg3v1sPgMvzDFgt0AW2H";
+
+        String requestBody = """
+        {
+          "range_start": 0,
+          "insert_before": 1
+        }
+        """;
+
+        RestAssured.baseURI = "https://api.spotify.com";
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .put("/v1/playlists/" + playlistId + "/tracks")
+                .then()
+                .statusCode(200)
+                .body("snapshot_id", notNullValue());
+    }
+
+    @Test
+    public void changePlaybackVolume() {
+        String accessToken = SpotifyTokenUtil.fetchAccessToken();
+
+        // Step 1: Get device info
+        Response deviceResponse = given()
+                .header("Authorization", "Bearer " + accessToken)
+                .when()
+                .get("https://api.spotify.com/v1/me/player/devices");
+
+        deviceResponse.then().statusCode(200);
+
+        String deviceId = deviceResponse.path("devices.find { it.is_active == true }.id");
+        Boolean supportsVolume = deviceResponse.path("devices.find { it.is_active == true }.supports_volume");
+        Boolean isPlaying = deviceResponse.path("devices.find { it.is_active == true }.is_active");
+
+        System.out.println("Device ID: " + deviceId);
+        System.out.println("Supports volume: " + supportsVolume);
+        System.out.println("Is active: " + isPlaying);
+
+        Assert.assertNotNull(deviceId, "No active device found. Please start Spotify playback.");
+
+        // Step 2: Set volume
+        given()
+                .header("Authorization", "Bearer " + accessToken)
+                .queryParam("volume_percent", 50)
+                .queryParam("device_id", deviceId)
+                .when()
+                .put("https://api.spotify.com/v1/me/player/volume")
+                .then()
+                .log().all()
+                .statusCode(204);
+    }
+
+
+
+
+
+    @Test
+    public void testTokenScopes() {
+        String token = SpotifyTokenUtil.fetchAccessToken();
+
+        Response response = RestAssured
+                .given()
+                .baseUri("https://api.spotify.com")
+                .header("Authorization", "Bearer " + token)
+                .when()
+                .get("/v1/me/player/devices")
+                .then()
+                .log().all()
+                .extract().response();
+
+        System.out.println("Status code: " + response.statusCode());
+    }
+
+
+    @Test
+    public void listDevices() {
+        String token = SpotifyTokenUtil.fetchAccessToken();
+
+        Response response = RestAssured
+                .given()
+                .baseUri("https://api.spotify.com")
+                .header("Authorization", "Bearer " + token)
+                .when()
+                .get("/v1/me/player/devices")
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        List<Map<String, Object>> devices = response.jsonPath().getList("devices");
+        if (devices.isEmpty()) {
+            System.out.println("❌ No active Spotify devices found.");
+        } else {
+            for (Map<String, Object> device : devices) {
+                System.out.println("✅ Device: " + device.get("name") + " | Type: " + device.get("type"));
+            }
+        }
+    }
+
+
+
 
 }
