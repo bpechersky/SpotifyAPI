@@ -372,6 +372,7 @@ public class SpotifyUserProfileTest {
     }
 
 
+/* This endpoint only Premium Spotify Account
     @Test
     public void changePlaybackVolume() {
         String accessToken = SpotifyTokenUtil.fetchAccessToken();
@@ -405,6 +406,7 @@ public class SpotifyUserProfileTest {
                 .log().all()
                 .statusCode(204);
     }
+*/
 
 
 
